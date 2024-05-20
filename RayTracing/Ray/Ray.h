@@ -17,6 +17,10 @@ public:
 	}
 
 	// Возвращает точку на луче в указанный момент времени
+	// P = S + c*t0
+	// Точка нахождения луча в момент t = 
+	// Точка испускания луча + 
+	// вектор скорости (направление движения луча) * отрезок времени
 	CVector3d GetPointAtTime(double time) const noexcept
 	{
 		return m_start + m_direction * time;

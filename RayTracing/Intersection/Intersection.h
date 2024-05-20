@@ -15,7 +15,7 @@ public:
 	// Конструктор по умолчанию - пересечения нет
 	CHitInfo()
 		:m_hitTime(-1)
-		,m_pHitObject(nullptr)
+		, m_pHitObject(nullptr)
 	{
 	}
 
@@ -26,13 +26,13 @@ public:
 		hitPointInObjectSpace - точка столкновения в системе координат объекта
 	*/
 	CHitInfo(
-		double hitTime, 
-		IGeometryObject const& hitObject, 
-		CVector3d const& hitPoint, 
+		double hitTime,
+		IGeometryObject const& hitObject,
+		CVector3d const& hitPoint,
 		CVector3d const& hitPointInObjectSpace,
 		CVector3d const& normal,
 		CVector3d const& normalInObjectSpace
-		)
+	)
 		: m_hitPoint(hitPoint)
 		, m_hitPointInObjectSpace(hitPointInObjectSpace)
 		, m_normal(Normalize(normal))
@@ -61,7 +61,7 @@ public:
 		assert(IsInitialized());
 		return m_hitPoint;
 	}
-	
+
 	// Возвращает координаты точки в системе координат объекта
 	CVector3d const& GetHitPointInObjectSpace() const
 	{
@@ -88,12 +88,18 @@ public:
 		return m_normalInObjectSpace;
 	}
 private:
+	// Точка столкновения в системе координатах сцены
 	CVector3d m_hitPoint;
+	// Точка столкновения в системе координат объекта
 	CVector3d m_hitPointInObjectSpace;
-	CVector3d m_normal;
-	CVector3d m_normalInObjectSpace;
+	// Время столкновения луча с объектом
 	double m_hitTime;
+	// Объект столкновения
 	IGeometryObject const* m_pHitObject;
+	// Нормаль к поверхности в мировой системе координат
+	CVector3d m_normal;
+	// Нормаль к поверхности в системе координат объекта
+	CVector3d m_normalInObjectSpace;
 };
 
 /*

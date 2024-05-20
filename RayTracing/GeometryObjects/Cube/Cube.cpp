@@ -43,19 +43,32 @@ void Cube::OnUpdateTransform()
 	m_inverseTransform = inverseInitialTransform * inverseGeomObjectTransform;
 }
 
+// Алгоритм пересечения луча с AABB
 bool Cube::Hit(CRay const& ray, CIntersection& intersection) const
 {
+	// Вместо преобразования куба выполняем обратное преобразование луча
+	// Результат будет тот же самый, но вычислить его будет проще
+
+	/*
+	* Такой подход позволяет работать с кубом,
+	как если бы он находился в начале координат и имел единичные размеры, упрощая вычисления.
+	*/
 	CRay invRay = Transform(ray, GetInverseTransform());
 	auto rayOrigin = invRay.GetStart();
 	auto rayDirection = invRay.GetDirection();
+
+	// Времена
 	double t1 = (m_center.x - m_size - rayOrigin.x) / rayDirection.x;
 	double t2 = (m_center.x + m_size - rayOrigin.x) / rayDirection.x;
 	double t3 = (m_center.y - m_size - rayOrigin.y) / rayDirection.y;
 	double t4 = (m_center.y + m_size - rayOrigin.y) / rayDirection.y;
 	double t5 = (m_center.z - m_size - rayOrigin.z) / rayDirection.z;
 	double t6 = (m_center.z + m_size - rayOrigin.z) / rayDirection.z;
-	
+
+	// Ближайшее и дальнейшее время пересечения луча с кубом
+	// Максимальное из минимальных по каждой оси
 	double tmin = std::max(std::max(std::min(t1, t2), std::min(t3, t4)), std::min(t5, t6));
+	// Минимальное из максимальных по каждой оси
 	double tmax = std::min(std::min(std::max(t1, t2), std::max(t3, t4)), std::max(t5, t6));
 
 	// if tmax < 0, ray (line) is intersecting AABB, but the whole AABB is behind us
@@ -70,7 +83,7 @@ bool Cube::Hit(CRay const& ray, CIntersection& intersection) const
 		return false;
 	}
 
-
+	// Вычисление точки пересечения
 	CVector3d hitPoint = ray.GetPointAtTime(tmin);
 	CVector3d hitPointInObjectSpace = invRay.GetPointAtTime(tmin);
 
@@ -83,6 +96,7 @@ bool Cube::Hit(CRay const& ray, CIntersection& intersection) const
 	double cz = std::abs(hitPointInObjectSpace.z - (m_center.z - m_size));
 	double fz = std::abs(hitPointInObjectSpace.z - (m_center.z + m_size));
 
+	// Преобразование нормали в мировое пространство
 	CVector3d normalInObjectSpace;
 	if (cx < epsilon)
 		normalInObjectSpace = CVector3d(-1.0, 0.0, 0.0);
@@ -99,6 +113,7 @@ bool Cube::Hit(CRay const& ray, CIntersection& intersection) const
 	else
 		normalInObjectSpace = CVector3d(0.0, 0.0, 0.0);
 
+	// Вычисляем нормаль к плоскости в системе координат объекта
 	CVector3d normalInWorldSpace = GetNormalMatrix() * normalInObjectSpace;
 
 	// В список точек пересечения добавляем информацию о найденной точке 
@@ -107,8 +122,9 @@ bool Cube::Hit(CRay const& ray, CIntersection& intersection) const
 		*this, // С кем
 		hitPoint, hitPointInObjectSpace, // Точка соударения луча с поверхностью
 		normalInWorldSpace, normalInObjectSpace // Нормаль к поверхности в точке соударения
-		));
+	));
 
+	// Точка столкновения есть, возвращаем true
 	return true;
 }
 

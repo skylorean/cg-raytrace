@@ -71,7 +71,8 @@ Application::~Application()
 
 void Application::MainLoop()
 {
-	// Инициализация приложения
+	// Инициализация приложения.
+	// Запуск в отдельном потоке и запуск таймера для периодического обновления содержимого окна приложения.
 	Initialize();
 
 	// Обновляем изначальное содержимое окна
@@ -128,6 +129,7 @@ void Application::MainLoop()
 	};
 
 	// Деинициализация приложения
+	// Остановка таймера и процесса построения изображения, если он ещё не завершился
 	Uninitialize();
 }
 
@@ -146,22 +148,32 @@ void Application::Uninitialize()
 }
 
 // Обновляем содержимое главного окна
+
+// Основной поток приложения выполняет периодическое обновление окна. 
+// Копируя в его теневой (внеэкранный буфер) содержимое буфера кадра.
+
+// То есть крч: подсистема визуализации -> Буфер кадра -> Теневой буфер, связанный с окном -> Видимое изображение в окне
 void Application::UpdateMainSurface()
 {
 	// Копирование буфера кадра в область главного окна
 	CopyFrameBufferToSDLSurface(); // (1)
-	// Для отображения содержимого внеэкранного буфера.
+
+	// Для отображения содержимого на экране из внеэкранного буфера.
 	SDL_Flip(m_pMainSurface); // (2)
 
+	// Устанавливается флаг "Поверхность обновлена"
 	m_mainSurfaceUpdated.store(1); // (3)
 }
 
 // Копирование буфера кадра в область главного окна
+// Перенос пикселей изображения из буфера кадра в теневой буфер, связанный с окном
 void Application::CopyFrameBufferToSDLSurface()
 {
+	// Выполняется доступ к пикселям поверхности
 	SDL_LockSurface(m_pMainSurface);
 	const SDL_PixelFormat* pixelFormat = m_pMainSurface->format;
 
+	// Проверка формата пикселей поверхности, для простоты только поддержка 32 битных.
 	if (pixelFormat->BitsPerPixel == 32)
 	{
 		const Uint8 rShift = pixelFormat->Rshift;
@@ -173,18 +185,20 @@ void Application::CopyFrameBufferToSDLSurface()
 		const unsigned h = m_frameBuffer.GetHeight();
 		const unsigned w = m_frameBuffer.GetWidth();
 
-		// (1.e)
+	    // Цикл с построчным копированием пикселей изображения. Адрес каждой последующей строки смещён относительно адреса предыдущей на pitch
 		Uint8* pixels = reinterpret_cast<Uint8*>(m_pMainSurface->pixels);
 		for (unsigned y = 0; y < h; ++y, pixels += m_pMainSurface->pitch)
 		{
-			// (1.f)
+			// Вычисляются адреса начала строки буфера кадра и теневого буфера
 			std::uint32_t const* srcLine = m_frameBuffer.GetPixels(y);
 			Uint32* dstLine = reinterpret_cast<Uint32*>(pixels);
 
+			// Когда формат пикселей буфера кадра и теневого буфера совпадают, то копируем обычной memcpy
 			if (bShift == 0 && gShift == 8 && rShift == 16)
 			{
 				memcpy(dstLine, srcLine, w * sizeof(Uint32));
 			}
+			// В противном случае, каждый пиксель буфера кадра трансформируется в требуемый формат с манипулированием над битами на основе сдвигов.
 			else
 			{
 				for (unsigned x = 0; x < w; ++x)
@@ -204,6 +218,7 @@ Uint32 SDLCALL Application::TimerCallback(Uint32 interval, void* param)
 {
 	/*
 		Статический метод TimerCallback вызывается библиотекой SDL.
+
 		Поскольку при инициализации таймера в качестве параметра таймера был передан указатель this экземпляра класса CApplication,
 		здесь используется оператор приведения типа для обратного преобразования указателя void* к указателю на CApplication
 		и происходит вызов метода OnTimer соответствующего экземпляра класса.
@@ -218,11 +233,13 @@ Uint32 Application::OnTimer(Uint32 interval)
 	unsigned totalChunks = 0;
 	if (m_renderer.GetProgress(renderedChunks, totalChunks))
 	{
+		// Если формирование завершено, то заносим значение 0.
 		interval = 0;
 	}
-
+	// Независимо от того, было ли завершено построение, необходимо принудительно пометить окно для последующего обновления.
 	InvalidateMainSurface();
 
+	// Интервал, через который должно произойти обновление.
 	return interval;
 }
 
@@ -230,17 +247,21 @@ void Application::InvalidateMainSurface()
 {
 	/*
 	Считывается значение флага m_mainSurfaceUpdated. Значение данного флага, равное 1 сигнализирует о том, что основной поток приложения ранее выполнил обновление содержимого окна.
-	Принудительное обновление содержимого окна приложения заключается в добавлении события SDL_VIDEOEXPOSE в очередь событий. 
-	Т.к. доабвление данного события в очередь и его обработка выполняются разными потоками, необходимо следить за тем, чтобы в очереди сообщений одновременно находилось не более одного8 события SDL_VIDEOEXPOSE.
-	Выполняется сброс флага m_mainsurfaceUpdated, благодаря чему последующее добавление события SDL_VIDEOEXPOSE будет возможно только после обновления содержимого окна.
-	Событие SDL_VIDEOEXPOSE добавляется в очередь.
 	*/
 	bool redrawIsNeeded = m_mainSurfaceUpdated.load() == 1;
 
+	/*
+	* 
+	Принудительное обновление содержимого окна приложения заключается в добавлении события SDL_VIDEOEXPOSE в очередь событий. 
+	Т.к. доабвление данного события в очередь и его обработка выполняются разными потоками, 
+	необходимо следить за тем, чтобы в очереди сообщений одновременно находилось не более одного8 события SDL_VIDEOEXPOSE.
+	*/
 	if (redrawIsNeeded)
 	{
+		// Выполняется сброс флага m_mainsurfaceUpdated, благодаря чему последующее добавление события SDL_VIDEOEXPOSE будет возможно только после обновления содержимого окна.
 		m_mainSurfaceUpdated.store(0);
 
+		// Событие SDL_VIDEOEXPOSE добавляется в очередь.
 		SDL_Event evt;
 		evt.type = SDL_VIDEOEXPOSE;
 		SDL_PushEvent(&evt);
@@ -291,6 +312,7 @@ void Application::AddSomeCubes()
 	cubeMaterial.SetAmbientColor(CVector4f(0.2f, 0.2f, 0.2f, 1));
 	cubeMaterial.SetSpecularCoefficient(2048);
 
+	// Создаю PhongShader на основе материала, начальный размер = 1, центр и матрица трансформации
 	AddCube(CreatePhongShader(cubeMaterial), 1, CVector3d(0, 0, 0), cubeTransform);
 }
 
