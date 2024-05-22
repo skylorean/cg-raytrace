@@ -84,11 +84,15 @@ bool Cube::Hit(CRay const& ray, CIntersection& intersection) const
 	}
 
 	// ¬ычисление точки пересечени€
+	// 
+	// “очка, где луч пересекает куб
 	CVector3d hitPoint = ray.GetPointAtTime(tmin);
 	CVector3d hitPointInObjectSpace = invRay.GetPointAtTime(tmin);
 
 	double epsilon = 0.000000000001;
 
+	// ѕеременный абсолютных значений разниц между координатами. 
+	// ѕомогают определить, на какой из граней куба произошло пересечение.
 	double cx = std::abs(hitPointInObjectSpace.x - (m_center.x - m_size));
 	double fx = std::abs(hitPointInObjectSpace.x - (m_center.x + m_size));
 	double cy = std::abs(hitPointInObjectSpace.y - (m_center.y - m_size));
@@ -96,7 +100,7 @@ bool Cube::Hit(CRay const& ray, CIntersection& intersection) const
 	double cz = std::abs(hitPointInObjectSpace.z - (m_center.z - m_size));
 	double fz = std::abs(hitPointInObjectSpace.z - (m_center.z + m_size));
 
-	// ѕреобразование нормали в мировое пространство
+	// ќтносительно того, с какой гранью произошло касание, выставл€ем нормаль к нужной грани
 	CVector3d normalInObjectSpace;
 	if (cx < epsilon)
 		normalInObjectSpace = CVector3d(-1.0, 0.0, 0.0);
@@ -113,7 +117,7 @@ bool Cube::Hit(CRay const& ray, CIntersection& intersection) const
 	else
 		normalInObjectSpace = CVector3d(0.0, 0.0, 0.0);
 
-	// ¬ычисл€ем нормаль к плоскости в системе координат объекта
+	// ¬ычисл€ем нормаль к плоскости в мировой системе координат
 	CVector3d normalInWorldSpace = GetNormalMatrix() * normalInObjectSpace;
 
 	// ¬ список точек пересечени€ добавл€ем информацию о найденной точке 
@@ -127,5 +131,3 @@ bool Cube::Hit(CRay const& ray, CIntersection& intersection) const
 	// “очка столкновени€ есть, возвращаем true
 	return true;
 }
-
-

@@ -62,9 +62,11 @@ bool HyperbolicParaboloid::Hit(CRay const& ray, CIntersection& intersection) con
 
 		// ¬торой корень квадратного уравнени€ - врем€ столкновени€ с боковой стенкой
 		t = (-b + discRoot) * invDoubleA;
-		// ¬ыполн€ем аналогичные проверки
+		// Ќас не интересуют пересечени€, происход€щие "в прошлом" луча
 		if (t > HIT_TIME_EPSILON)
 		{
+			// ѕровер€ем координату z точки пересечени€. ќна не должна выходить за пределы
+			// диапазона 0..1
 			double hitX = start.x + dir.x * t;
 			double hitY = start.z + dir.z * t;
 			if (hitX >= -1 && hitX <= 1 &&
@@ -108,16 +110,19 @@ bool HyperbolicParaboloid::Hit(CRay const& ray, CIntersection& intersection) con
 		CVector3d hitPointInObjectSpace = invRay.GetPointAtTime(hitTime);
 		CVector3d hitNormalInObjectSpace;
 
+		// TODO: z -> y
 		hitNormalInObjectSpace = CVector3d(2 * hitPointInObjectSpace.x, -2 * hitPointInObjectSpace.z, -1);
 
+		// —кал€рное произведение Dot(a,b) = ax * bx + ay*by + az * bz;
 		auto nDotR = Dot(hitNormalInObjectSpace, dir);
+		// ≈сли положительна, то в сторону источника света, иначе обратно
 		if (nDotR > 0)
 		{
 			hitNormalInObjectSpace = -hitNormalInObjectSpace;
 		}
 
 		/*
-			—обираем информацию о точке столкновени€
+		*	—обираем информацию о точке столкновени€
 		*/
 		CVector3d hitNormal = GetNormalMatrix() * hitNormalInObjectSpace;
 

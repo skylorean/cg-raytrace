@@ -1,6 +1,11 @@
 #include <iostream>
 #include "Application/Application.h"
 
+/*
+* Нормаль - вектор, который перпендикулярен к поверхности объекта в данной точке.
+* 
+*/
+
 
 FILE _iob[] = { *stdin, *stdout, *stderr };
 extern "C" FILE * __cdecl __iob_func(void) { return _iob; }
