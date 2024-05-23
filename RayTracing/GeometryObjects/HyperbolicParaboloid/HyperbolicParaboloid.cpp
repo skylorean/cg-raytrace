@@ -110,8 +110,7 @@ bool HyperbolicParaboloid::Hit(CRay const& ray, CIntersection& intersection) con
 		CVector3d hitPointInObjectSpace = invRay.GetPointAtTime(hitTime);
 		CVector3d hitNormalInObjectSpace;
 
-		// TODO: z -> y
-		hitNormalInObjectSpace = CVector3d(2 * hitPointInObjectSpace.x, -2 * hitPointInObjectSpace.z, -1);
+		hitNormalInObjectSpace = CVector3d(2 * hitPointInObjectSpace.x, -2 * hitPointInObjectSpace.y, -1);
 
 		// —кал€рное произведение Dot(a,b) = ax * bx + ay*by + az * bz;
 		auto nDotR = Dot(hitNormalInObjectSpace, dir);

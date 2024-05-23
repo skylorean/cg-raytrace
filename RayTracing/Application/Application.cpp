@@ -422,7 +422,6 @@ void Application::AddSomeIcosahedron()
 
 void Application::AddSomeHyperbolicParaboloid()
 {
-	// TODO: зачем изначально мне вот эта матрица трансоформации
 	CMatrix4d transform;
 	transform.Rotate(-25, 0, 1, 0);
 	transform.Translate(1, -1, 0);

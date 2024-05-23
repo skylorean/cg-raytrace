@@ -44,7 +44,7 @@ CVector4f PhongShader::Shade(CShadeContext const& shadeContext) const
 
 		// —читаем тени, выпуска€ луч из точки касани€ с поверхностью объекта в направлении текущего источника света
 		bool isInShadow = CastSecondaryRay(shadeContext.GetSurfacePoint(), shadeContext.GetScene(), lightDirection);
-		// TODO: знать формулу
+
 		// ¬ычисл€ем интенсивность света в направлении от источника к текущей точке
 		double lightIntensity = light.GetIntensityInDirection(lightDirection);
 
