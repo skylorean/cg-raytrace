@@ -17,15 +17,17 @@ bool CPlane::Hit(CRay const& ray, CIntersection& intersection) const
 
 	// Вместо преобразования плоскости выполняем обратное преобразование луча
 	// Результат будет тот же самый
+
+	// Умножаю луч на матрицу обратного преобразования. В итоге луч будет в системе координат объекта
 	CRay invRay = Transform(ray, GetInverseTransform());
 
-	// Нормаль к плоскости в системе координат объекта 
+	// Нормаль к плоскости в системе координат объекта
 	CVector3d normalInObjectSpace = m_planeEquation;
 
 	// Скалярное произведение направления луча и нормали к плоскости
 	double normalDotDirection = Dot(invRay.GetDirection(), normalInObjectSpace);
 
-	// Если скалярное произведение близко к нулю, луч параллелен плоскости
+	// Если скалярное произведение близко к нулю, луч параллелен плоскости, пересечения нет
 	if (fabs(normalDotDirection) < EPSILON)
 	{
 		// Луч параллелен плоскости - точек пересечения нет
@@ -55,6 +57,7 @@ bool CPlane::Hit(CRay const& ray, CIntersection& intersection) const
 	CVector3d hitPointInObjectSpace = invRay.GetPointAtTime(hitTime);
 
 	// Вычисляем нормаль к плоскости в системе координат объекта
+	// Беру матрицу нормали и умножаю на нормаль в системе координат объекта
 	CVector3d normalInWorldSpace = GetNormalMatrix() * normalInObjectSpace;
 
 	// В список точек пересечения добавляем информацию о найденной точке пересечения

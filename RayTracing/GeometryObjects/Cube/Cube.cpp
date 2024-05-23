@@ -44,6 +44,7 @@ void Cube::OnUpdateTransform()
 }
 
 // Алгоритм пересечения луча с AABB
+// https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
 bool Cube::Hit(CRay const& ray, CIntersection& intersection) const
 {
 	// Вместо преобразования куба выполняем обратное преобразование луча

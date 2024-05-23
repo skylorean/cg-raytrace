@@ -33,7 +33,7 @@ public:
 
 		// Также вычисляем матрицу обратного преобразования
 		m_invTransform = transform.GetInverseMatrix();
-
+		
 		// и матрицу нормали
 		m_normalMatrix.SetRow(0, m_invTransform.GetColumn(0));
 		m_normalMatrix.SetRow(1, m_invTransform.GetColumn(1));

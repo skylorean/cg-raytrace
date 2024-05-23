@@ -50,6 +50,7 @@ CVector4f CSimpleDiffuseShader::Shade(CShadeContext const& shadeContext) const
 		double nDotL = Max(Dot(n, Normalize(lightDirection)), 0.0);
 		
 		// Вычисляем диффузный цвет точки
+		// Скалярное произведение (косинус между нормалью и направлением источника света) * интенсивность * цвет источника света * коэф материала
 		CVector4f diffuseColor = static_cast<float>(nDotL * lightIntensity) * light.GetDiffuseIntensity() * m_material.GetDiffuseColor();
 
 		// К результирующему цвету прибавляется вычисленный диффузный цвет
